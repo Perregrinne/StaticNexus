@@ -1,0 +1,11 @@
+#navbar {
+    background-color: #dddddd;
+}
+#container {
+    overflow: hidden;
+}
+body {
+    background-color: rgb(10, 10, 10);
+    margin: 0;
+    overflow-y: hidden !important;
+}

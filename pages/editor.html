@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0">
+    <title>Editor</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/editor.css">
+    <script src="/js/nodesapi.js"></script>
+</head>
+<body>
+    <canvas id="canvas" width="2000px" height="1000px"></canvas>
+    <div id="container">
+    </div>
+    <!--
+    <script>
+        //Checks if the mouse moved
+        document.addEventListener('mousemove', onmousemove);
+
+        //Checks if the mouse button is up
+        document.addEventListener('mouseup', onmouseup);
+
+        //An id of an element that is being dragged will be stored here:
+        var dragElem = "";
+
+        //For moving the nodes and their lines around the page:
+        document.body.onmousedown = function(event) {
+
+            //Figure out what element id in the body the mouse is down on
+            event = event || window.event;
+
+            var elems = document.elementsFromPoint(event.x, event.y);
+
+            for(elem of elems)
+            {
+                if(elem.classList.contains("node"))
+                {
+                    dragElem = elem.id;
+                }
+                else
+                {
+                    dragElem = "";
+                }
+            }
+        }
+
+        /*
+        * Base class for a scripting node.
+        * 
+        * Parameters:
+        * name: The name of the node that is displayed at the top.
+        * type: The type of the node (determines node color).
+        * func: What code runs inside this node.
+        * inputs: Parameters (if any) that the node's function takes in.
+        * outputs: Results (if any) that the node's function returns.
+        */
+        class GraphNode
+        {
+
+            constructor(id, name, type, input, output, x, y)
+            {
+                this.id = id;
+                this.name = name;
+                this.type = type;
+                this.input = input;
+                this.output = output;
+                this.x = x;
+                this.y = y;
+            }
+
+            //Dictionary that determine the node's color, based off its operation type:
+            NODETYPE = {
+                "MATH": "rgba(10, 75, 10, 200)",
+                "FUNCTION": "rgba(75, 10, 10, 200)",
+                "VARIABLE": "rgba(10, 10, 75, 200)",
+                "FILE": "rgba(70, 70, 10, 200)",
+                "CONDITION": "rgba(70, 70, 70, 200)",
+            };
+
+            //Dictionary for pin colors, based off input/output data types:
+            PINTYPE = {
+                "BOOL": "rgba(10, 75, 10, 200)",
+                "INT": "rgba(75, 10, 10, 200)",
+                "FLOAT": "rgba(10, 10, 75, 200)",
+                "CHAR": "rgba(70, 70, 10, 200)",
+                "STRING": "rgba(70, 10, 70, 200)",
+                "DATETIME": "rgba(30, 75, 30, 200)",
+            };
+
+            //Dictionary for text colors or other miscellaneous colors used:
+            COLOR = {
+                //Dark theme colors:
+                "dBLACK": "rgb(10, 10, 10)",
+                "dDARK": "rgb(30, 30, 30)",
+                "dGRAY": "rgb(100, 100, 100)",
+                "dWHITE": "rgb(225, 225, 225)",
+                //Light theme colors:
+                "lBLACK": "rgb(10, 10, 10)",
+                "lDARK": "rgb(30, 30, 30)",
+                "lGRAY": "rgb(100, 100, 100)",
+                "lWHITE": "rgb(225, 225, 225)",
+            };
+
+            drawPin(newNode, pinList, IsInput, name)
+            {
+                if(pinList.length && pinList.length > 0) //The page was somehow broken till this was added
+                {
+                    let nodePin = 0;
+                    for(const element of pinList)
+                    {
+                        let pin = document.createElement("li");
+                        //find a name that isn't used:
+                        let pinNum = 0;
+                        let inOrOut = IsInput ? "In" : "Out";
+                        let checkId = document.getElementById(name+ inOrOut + pinNum);
+                        while(checkId)
+                        {
+                            pinNum += 1;
+                            checkId = document.getElementById(name + inOrOut + pinNum);
+                        }
+                        pin.id = name + inOrOut + pinNum;
+                        pin.style.backgroundColor = this.PINTYPE[element];
+                        newNode.style.listStyleType = "none";
+                        pin.style.borderRadius = "0.5em";
+                        pin.style.width = "1em";
+                        pin.style.height = "1em";
+                        pin.style.position = "absolute";
+                        if(IsInput)
+                        {
+                            pin.style.left = "-0.5em";
+                        }
+                        else
+                        {
+                            pin.style.right = "-0.5em";
+                        }
+                        pin.style.top = (2.5 + (nodePin * 1.5)) + "em";
+
+                        newNode.appendChild(pin);
+                        nodePin++;
+                    }
+                }
+            }
+
+            //Everything comes together here:
+            drawNode()
+            {
+                //Create the node div:
+                let newNode = document.createElement("div");
+                newNode.id = this.id; //Name it
+                newNode.classList.add("node"); //It should be of class "node"
+                let nodeType = document.createElement("div"); //The colored name bar
+
+                //Node design:
+                newNode.style.backgroundColor = this.COLOR["dDARK"];
+                nodeType.style.backgroundColor = this.NODETYPE[this.type];
+                newNode.style.color = this.COLOR["dWHITE"];
+                newNode.style.zIndex = 10;
+                newNode.style.position = "absolute";
+                newNode.style.left = this.x + "px";
+                newNode.style.top = this.y + "px";
+                newNode.style.width = "7.5em";
+                newNode.style.height = "10em";
+                newNode.style.borderRadius = "10px";
+                newNode.style.borderStyle = "solid";
+                newNode.style.borderWidth = "2px";
+                newNode.style.borderColor = this.NODETYPE[this.type];
+                nodeType.style.position = "relative";
+                nodeType.style.left = "0px";
+                nodeType.style.right = "0px";
+                nodeType.style.height = "2em";
+                nodeType.style.textAlign = "center";
+                nodeType.style.padding = "5px";
+                nodeType.style.borderRadius = "5px 5px 0 0";
+                let nodeName = document.createTextNode(this.name);
+
+                //Put the pieces together and append to the body
+                nodeType.appendChild(nodeName);
+                newNode.appendChild(nodeType);
+
+                //Now we're able to make the pins:
+                this.drawPin(newNode, this.input, true, this.name);
+                this.drawPin(newNode, this.output, false, this.name);
+
+                document.body.insertBefore(newNode, document.body.childNodes[0]);
+            }
+        }
+
+        //Takes an Element By Id and returns its center:
+        function getCenterX(objId)
+        {
+            return objId.getBoundingClientRect().left + (objId.getBoundingClientRect().width / 2.0);
+        }
+        function getCenterY(objId)
+        {
+            return y = objId.getBoundingClientRect().top + (objId.getBoundingClientRect().height / 2.0);
+        }
+        //Takes the coordinates of the pins and outputs the angle (degrees) they make with the horizontal axis:
+        function getAngle(x1, x2, y1, y2)
+        {
+            return (Math.atan2(y1-y2, x1-x2) * 180 / Math.PI) + 180;
+        }
+        //Returns the hypotenuse (the length of a line connector):
+        function getLength(x1, x2, y1, y2)
+        {
+            return Math.sqrt(Math.pow((x2 - x1), 2) + Math.pow((y2 - y1), 2));
+        }
+
+        function drawConnection(outPin, inPin)
+        {
+            let startX = getCenterX(inPin);
+            let startY = getCenterY(inPin);
+            let endX = getCenterX(outPin);
+            let endY = getCenterY(outPin);
+            let rot = getAngle(startX, endX, startY, endY);
+
+            let connection = document.createElement("img");
+            connection.style.backgroundColor = "#FFFFFF";
+            connection.style.transformOrigin = "left";
+            connection.style.transform = "rotate(" + rot + "deg)";
+            connection.style.width = getLength(startX, endX, startY, endY) + "px";
+            connection.style.height = "2px";
+            connection.style.position = "absolute";
+            connection.style.left = startX + "px";
+            connection.style.top = startY + "px";
+            document.body.appendChild(connection);
+        }
+
+        //Returns the next unused id name for a node: "Node0", "Node1", ...
+        function newNodeId()
+        {
+            var index = 0;
+            while(document.getElementById("Node" + index)){ index++; }
+            return "Node" + index;
+        }
+
+        //Keep track of pin connections:
+        //Draw the lines to and from node pins based on the list of connections:
+
+        //Make a node:
+        node1 = new GraphNode(newNodeId(), "Add", "MATH", ["INT", "FLOAT"], ["FLOAT"], 600, 450);
+        node1.drawNode();
+        node2 = new GraphNode(newNodeId(), "If", "CONDITION", ["BOOL"], ["BOOL", "BOOL"], 750, 450);
+        node2.drawNode();
+        drawConnection(document.getElementById("AddOut0"), document.getElementById("IfIn0"));
+    </script>
+-->
+</body>
+</html>
